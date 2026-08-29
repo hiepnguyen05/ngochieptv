@@ -62,9 +62,10 @@ export default function Navbar() {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await searchMovies(trimmed, 1);
-        if (res && res.items) {
-          setSearchResults(res.items);
+        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
+        if (response.ok) {
+          const res = await response.json();
+          setSearchResults(res.items || []);
         } else {
           setSearchResults([]);
         }
