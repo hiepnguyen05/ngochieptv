@@ -74,18 +74,31 @@ export interface MovieDetailResponse {
   movie?: MovieDetail;
 }
 
-// Fetch helper với revalidation
-async function fetchAPI<T>(endpoint: string, revalidateSeconds = 1800): Promise<T | null> {
+// Fetch helper với Cloudflare bypass headers & revalidation
+async function fetchAPI<T>(endpoint: string, revalidateSeconds = 300): Promise<T | null> {
   const url = `${API_BASE}${endpoint}`;
+  const headers = {
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Referer': 'https://phim.nguonc.com/',
+    'Origin': 'https://phim.nguonc.com',
+  };
+
   try {
-    const res = await fetch(url, {
+    let res = await fetch(url, {
       next: { revalidate: revalidateSeconds },
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-      },
+      headers,
     });
+
+    // Tự động retry nếu bị 403 tạm thời
+    if (!res.ok && res.status === 403) {
+      res = await fetch(url, {
+        cache: 'no-store',
+        headers,
+      });
+    }
 
     if (!res.ok) {
       console.error(`API Fetch Error ${res.status}: ${url}`);
