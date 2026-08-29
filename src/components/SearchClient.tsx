@@ -43,9 +43,13 @@ export default function SearchClient({ query, currentPage, initialRes }: SearchC
         const promises = [];
         for (let p = startApi; p <= endApi; p++) {
           promises.push(
-            fetch(`${API_BASE}/films/search?keyword=${encodeURIComponent(query)}&page=${p}`).then((r) =>
-              r.ok ? r.json() : null
-            )
+            fetch(`/api/search?q=${encodeURIComponent(query)}&page=${p}`)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() =>
+                fetch(`${API_BASE}/films/search?keyword=${encodeURIComponent(query)}&page=${p}`).then((r) =>
+                  r.ok ? r.json() : null
+                )
+              )
           );
         }
 
