@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Menu, X, ChevronDown, Loader2, Play } from 'lucide-react';
-import { CATEGORY_LIST, GENRE_LIST, COUNTRY_LIST, searchMovies, MovieListItem } from '@/lib/api';
+import { CATEGORY_LIST, GENRE_LIST, COUNTRY_LIST, searchMovies, MovieListItem, API_BASE } from '@/lib/api';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -62,13 +62,24 @@ export default function Navbar() {
 
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
-        if (response.ok) {
-          const res = await response.json();
-          setSearchResults(res.items || []);
-        } else {
-          setSearchResults([]);
+        let resData = null;
+        try {
+          const directRes = await fetch(`${API_BASE}/films/search?keyword=${encodeURIComponent(trimmed)}&page=1`);
+          if (directRes.ok) {
+            resData = await directRes.json();
+          }
+        } catch {
+          // Fallback to server proxy
         }
+
+        if (!resData || !resData.items || resData.items.length === 0) {
+          const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
+          if (response.ok) {
+            resData = await response.json();
+          }
+        }
+
+        setSearchResults(resData?.items || []);
       } catch (err) {
         console.error('Realtime Search Error:', err);
         setSearchResults([]);

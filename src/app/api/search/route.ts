@@ -24,13 +24,13 @@ export async function GET(request: NextRequest) {
 
     if (!res.ok) {
       console.error(`Search Proxy fetch Error ${res.status}: ${url}`);
-      return NextResponse.json({ items: [] });
+      return NextResponse.json({ items: [], status: 'error' }, { status: res.status });
     }
 
     const data = await res.json();
     return NextResponse.json(data || { items: [] });
   } catch (error) {
     console.error('Search Proxy Exception:', error);
-    return NextResponse.json({ items: [] }, { status: 500 });
+    return NextResponse.json({ items: [], status: 'error' }, { status: 500 });
   }
 }
